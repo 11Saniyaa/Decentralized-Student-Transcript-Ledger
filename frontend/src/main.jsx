@@ -1,31 +1,38 @@
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import { createBrowserRouter, RouterProvider } from 'react-router-dom'
-import App from './ui/App'
-import Register from './ui/pages/Register'
-import CreateTranscript from './ui/pages/CreateTranscript'
-import ViewTranscript from './ui/pages/ViewTranscript'
-import VerifyTranscript from './ui/pages/VerifyTranscript'
-import InstitutionAccess from './ui/pages/InstitutionAccess'
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import App from './App';
+import Landing from './pages/Landing';
+import Login from './pages/Login';
+import StudentDashboardNew from './pages/StudentDashboardNew';
+import InstitutionDashboardNew from './pages/InstitutionDashboardNew';
+import TranscriptViewer from './pages/TranscriptViewer';
+import Profile from './pages/Profile';
+import TransactionLog from './pages/TransactionLog';
 
 const router = createBrowserRouter([
-  { path: '/', element: <App />, children: [
-    { index: true, element: <InstitutionAccess /> },
-    { path: 'register', element: <Register /> },
-    { path: 'create', element: <CreateTranscript /> },
-    { path: 'view/:id', element: <ViewTranscript /> },
-    { path: 'verify/:id', element: <VerifyTranscript /> },
-    { path: 'institution', element: <InstitutionAccess /> },
-    { path: 'verify', element: <div className="card"><h3>🔍 Verify Transcripts</h3><p>Coming soon...</p></div> },
-    { path: 'admin', element: <div className="card"><h3>⚙️ Admin Panel</h3><p>Coming soon...</p></div> },
-  ]}
-])
+  {
+    path: '/',
+    element: <App />,
+    children: [
+      { index: true, element: <Landing /> },
+      { path: 'login', element: <Login /> },
+      // Student routes
+      { path: 'student/dashboard', element: <StudentDashboardNew /> },
+      { path: 'student/transactions', element: <TransactionLog /> },
+      { path: 'student/profile', element: <Profile /> },
+      // Institution routes
+      { path: 'institution/dashboard', element: <InstitutionDashboardNew /> },
+      { path: 'institution/transactions', element: <TransactionLog /> },
+      { path: 'institution/profile', element: <Profile /> },
+      // Shared routes
+      { path: 'transcript/:id', element: <TranscriptViewer /> },
+    ],
+  },
+]);
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <RouterProvider router={router} />
   </React.StrictMode>
-)
-
-
-
+);

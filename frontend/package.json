@@ -15,12 +15,18 @@
   "description": "",
   "type": "module",
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/icons-material": "^7.3.5",
+    "@mui/material": "^7.3.5",
+    "@mui/system": "^7.3.5",
     "ethers": "^6.15.0",
     "ipfs-http-client": "^60.0.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.9.3",
-    "web3.storage": "^4.5.5"
+    "web3.storage": "^4.5.5",
+    "axios": "^1.6.2"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^5.0.4",
