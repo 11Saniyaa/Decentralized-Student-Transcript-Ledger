@@ -45,6 +45,7 @@ contract StudentTranscriptLedger is AccessControl, ReentrancyGuard {
         uint256 institutionId;
         string degree;
         string major;
+        string semester;
         Course[] courses;
         uint256 graduationDate;
         string ipfsHash; // For storing additional documents
@@ -57,6 +58,8 @@ contract StudentTranscriptLedger is AccessControl, ReentrancyGuard {
         address studentAddress;
         string name;
         string studentId;
+        string branch;
+        string contact;
         uint256[] transcriptIds;
         bool isRegistered;
         uint256 registrationDate;
@@ -67,6 +70,8 @@ contract StudentTranscriptLedger is AccessControl, ReentrancyGuard {
     mapping(address => uint256) public institutionAddressToId;
     mapping(uint256 => Transcript) public transcripts;
     mapping(address => Student) public students;
+    address[] private studentAddresses;
+    mapping(string => address) private studentIdToAddress;
     mapping(bytes32 => bool) public usedSignatures;
     
     // Events
@@ -131,19 +136,26 @@ contract StudentTranscriptLedger is AccessControl, ReentrancyGuard {
     /**
      * @dev Register a new student
      */
-    function registerStudent(string memory _name, string memory _studentId) external {
+    function registerStudent(string memory _name, string memory _studentId, string memory _branch, string memory _contact) external {
         require(!students[msg.sender].isRegistered, "Student already registered");
         require(bytes(_name).length > 0, "Name cannot be empty");
         require(bytes(_studentId).length > 0, "Student ID cannot be empty");
+        require(studentIdToAddress[_studentId] == address(0), "Student ID already used");
+        require(bytes(_branch).length > 0, "Branch required");
+        require(bytes(_contact).length > 0, "Contact required");
         
         students[msg.sender] = Student({
             studentAddress: msg.sender,
             name: _name,
             studentId: _studentId,
+            branch: _branch,
+            contact: _contact,
             transcriptIds: new uint256[](0),
             isRegistered: true,
             registrationDate: block.timestamp
         });
+        studentIdToAddress[_studentId] = msg.sender;
+        studentAddresses.push(msg.sender);
         
         emit StudentRegistered(msg.sender, _name);
     }
@@ -157,11 +169,13 @@ contract StudentTranscriptLedger is AccessControl, ReentrancyGuard {
         address _studentAddress,
         string memory _degree,
         string memory _major,
+        string memory _semester,
         string memory _ipfsHash
     ) external onlyRole(INSTITUTION_ROLE) nonReentrant returns (uint256) {
         require(students[_studentAddress].isRegistered, "Student not registered");
         require(bytes(_degree).length > 0, "Degree cannot be empty");
         require(bytes(_major).length > 0, "Major cannot be empty");
+        require(bytes(_semester).length > 0, "Semester cannot be empty");
         
         uint256 institutionId = institutionAddressToId[msg.sender];
         require(institutions[institutionId].isActive, "Institution not active");
@@ -176,6 +190,7 @@ contract StudentTranscriptLedger is AccessControl, ReentrancyGuard {
             institutionId: institutionId,
             degree: _degree,
             major: _major,
+            semester: _semester,
             courses: new Course[](0),
             graduationDate: 0,
             ipfsHash: _ipfsHash,
@@ -266,6 +281,28 @@ contract StudentTranscriptLedger is AccessControl, ReentrancyGuard {
      */
     function getStudentTranscripts(address _studentAddress) external view returns (uint256[] memory) {
         return students[_studentAddress].transcriptIds;
+    }
+
+    function getStudentAddressById(string memory _studentId) external view returns (address) {
+        return studentIdToAddress[_studentId];
+    }
+
+    function getStudentById(string memory _studentId) external view returns (Student memory) {
+        address addr = studentIdToAddress[_studentId];
+        return students[addr];
+    }
+
+    function getStudentByAddress(address _studentAddress) external view returns (Student memory) {
+        return students[_studentAddress];
+    }
+
+    function getTotalStudents() external view returns (uint256) {
+        return studentAddresses.length;
+    }
+
+    function getStudentAt(uint256 index) external view returns (Student memory) {
+        require(index < studentAddresses.length, "Index out of bounds");
+        return students[studentAddresses[index]];
     }
     
     /**

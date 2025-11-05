@@ -132,6 +132,17 @@ export function disconnectWallet() {
   notifyListeners()
 }
 
+// Demo-only: set role without wallet (for teacher demo)
+export function setDemoRole(role) {
+  userContext = {
+    account: '0xDEMO000000000000000000000000000000000000',
+    role,
+    institutionId: role === ROLES.INSTITUTION ? 1 : null,
+    isConnected: true
+  }
+  notifyListeners()
+}
+
 // Get current user context
 export function getCurrentUser() {
   return { ...userContext }
@@ -148,6 +159,7 @@ export function canPerform(action) {
   
   switch (action) {
     case 'createTranscript':
+      return false
     case 'addCourse':
     case 'setGraduation':
       return role === ROLES.INSTITUTION

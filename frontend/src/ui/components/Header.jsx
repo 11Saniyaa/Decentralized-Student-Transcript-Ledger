@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react'
-import { Link, useLocation } from 'react-router-dom'
-import { connectWallet, disconnectWallet, getCurrentUser, addAuthListener, getRoleInfo, ROLES } from '../../lib/auth'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { connectWallet, disconnectWallet, getCurrentUser, addAuthListener, getRoleInfo, ROLES, setDemoRole } from '../../lib/auth'
 
 export default function Header() {
   const [user, setUser] = useState(getCurrentUser())
   const location = useLocation()
+  const navigate = useNavigate()
   
   useEffect(() => {
     const removeListener = addAuthListener(setUser)
@@ -29,24 +30,19 @@ export default function Header() {
   
   const getNavigationItems = () => {
     const baseItems = [
-      { path: '/', label: 'Dashboard', icon: '📊' }
+      { path: '/', label: 'Institution Access' },
+      { path: '/register', label: 'Register' }
     ]
     
     if (user.role === ROLES.STUDENT) {
       return [
         ...baseItems,
-        { path: '/register', label: 'Register', icon: '📝' },
-        { path: '/my-transcripts', label: 'My Transcripts', icon: '📚' }
+        { path: '/register', label: 'Register', icon: '📝' }
       ]
     }
     
     if (user.role === ROLES.INSTITUTION) {
-      return [
-        ...baseItems,
-        { path: '/institution/dashboard', label: 'Institution', icon: '🏛️' },
-        { path: '/create', label: 'Create Transcript', icon: '➕' },
-        { path: '/institution/students', label: 'Students', icon: '👥' }
-      ]
+      return baseItems
     }
     
     if (user.role === ROLES.VERIFIER) {
@@ -63,29 +59,12 @@ export default function Header() {
       ]
     }
     
-    return [
-      ...baseItems,
-      { path: '/register', label: 'Register', icon: '📝' },
-      { path: '/create', label: 'Create Transcript', icon: '➕' },
-      { path: '/verify', label: 'Verify', icon: '✅' }
-    ]
+    return baseItems
   }
   
   return (
     <header className="header">
       <div className="brand">
-        <div style={{
-          width: 40,
-          height: 40,
-          background: 'var(--gradient)',
-          borderRadius: '12px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: '20px'
-        }}>
-          🎓
-        </div>
         <div>
           <h2 className="title">Transcript Ledger</h2>
           <div style={{ fontSize: '14px', color: 'var(--muted)', marginTop: '-4px' }}>
@@ -101,13 +80,31 @@ export default function Header() {
             to={item.path}
             className={isActive(item.path) ? 'active' : ''}
           >
-            <span style={{ marginRight: '6px' }}>{item.icon}</span>
             {item.label}
           </Link>
         ))}
       </nav>
       
       <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+        <div className="row" style={{ gap: '8px', alignItems: 'center' }}>
+          <span style={{ color: 'var(--muted)', fontSize: '12px' }}>Role:</span>
+          <select
+            className="select"
+            value={user.role || ''}
+            onChange={(e) => {
+              const val = e.target.value
+              if (!val) return
+              setDemoRole(val)
+              if (val === ROLES.INSTITUTION) navigate('/institution')
+              if (val === ROLES.STUDENT) navigate('/my-transcripts')
+            }}
+            style={{ padding: '6px 8px' }}
+          >
+            <option value="">Guest</option>
+            <option value={ROLES.INSTITUTION}>Institution</option>
+            <option value={ROLES.STUDENT}>Student</option>
+          </select>
+        </div>
         {user.isConnected ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div className="role-badge" data-role={roleInfo.color}>

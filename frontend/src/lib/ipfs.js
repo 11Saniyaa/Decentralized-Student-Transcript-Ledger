@@ -8,6 +8,7 @@ const IPFS_GATEWAYS = [
 export async function uploadFile(file) {
   // Try multiple upload methods
   const methods = [
+    () => uploadViaLocalIpfs(file),
     () => uploadViaPinataAPI(file),
     () => uploadViaIPFSGateway(file),
     () => uploadViaWeb3Storage(file)
@@ -29,7 +30,21 @@ export async function uploadFile(file) {
   throw new Error('All IPFS upload methods failed. Please try again or check your internet connection.')
 }
 
-// Method 1: Pinata API (most reliable)
+// Method 0: Local IPFS node via ipfs-http-client
+//async function uploadViaLocalIpfs(file) {
+//  const apiUrl = import.meta.env.VITE_IPFS_LOCAL_API || 'http://127.0.0.1:5001/api/v0'
+//  try {
+//    const { create } = await import('ipfs-http-client')
+//    const client = create({ url: apiUrl })
+//    const added = await client.add(file)
+//    if (!added || !added.cid) throw new Error('Local IPFS add failed')
+//    return added.cid.toString()
+//  } catch (e) {
+//    throw new Error(`Local IPFS unavailable: ${e.message}`)
+//  }
+//}
+
+// Method 1: Pinata API (most reliable hosted)
 async function uploadViaPinataAPI(file) {
   const pinataApiKey = import.meta.env.VITE_PINATA_API_KEY
   const pinataSecret = import.meta.env.VITE_PINATA_SECRET_KEY
@@ -115,13 +130,16 @@ async function uploadViaSimpleFallback(file) {
 }
 
 export function getIpfsUrl(hash) {
-  // Return the most reliable gateway URL
+  const localGateway = import.meta.env.VITE_IPFS_LOCAL_GATEWAY || ''
+  if (localGateway) return `${localGateway.replace(/\/$/, '')}/ipfs/${hash}`
+  // Default public gateway
   return `https://ipfs.io/ipfs/${hash}`
 }
 
 // Add fallback to methods array if needed
 export async function uploadFileWithFallback(file) {
   const methods = [
+    () => uploadViaLocalIpfs(file),
     () => uploadViaPinataAPI(file),
     () => uploadViaIPFSGateway(file),
     () => uploadViaWeb3Storage(file),

@@ -11,7 +11,7 @@ export default function InstitutionDashboard() {
     totalStudents: 0n,
     verifiedTranscripts: 0n
   })
-  const [recentTranscripts, setRecentTranscripts] = useState([])
+  const [allTranscripts, setAllTranscripts] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -20,26 +20,63 @@ export default function InstitutionDashboard() {
   }, [])
 
   useEffect(() => {
-    if (user.role === ROLES.INSTITUTION && user.institutionId !== null) {
-      loadInstitutionData()
-    }
+    loadData()
   }, [user])
 
-  const loadInstitutionData = async () => {
+  const loadData = async () => {
     try {
       const contract = getContractReadonly()
-      
-      // Get institution details
-      const institutionData = await contract.getInstitution(BigInt(user.institutionId))
-      setInstitution(institutionData)
-      
-      // Get stats
+      // Try to load institution details if user has an institutionId
+      if (user?.institutionId) {
+        try {
+          const inst = await contract.getInstitution(BigInt(user.institutionId))
+          // Normalize fields to what the UI expects
+          setInstitution({
+            name: inst.name,
+            isActive: inst.isActive,
+            admin: inst.institutionAddress,
+            location: inst.accreditationNumber,
+            description: `Accreditation: ${inst.accreditationNumber}`,
+            registrationDate: BigInt(inst.createdAt)
+          })
+        } catch (_) {}
+      }
+
+      // Load all transcripts
       const totalTranscripts = await contract.getTotalTranscripts()
-      setStats(prev => ({ ...prev, totalTranscripts }))
-      
-      // Load recent transcripts (simplified - in real app you'd filter by institution)
-      // For now, we'll just show total count
-      
+      const total = Number(totalTranscripts)
+      const transcripts = []
+      const studentSet = new Set()
+      let verifiedCount = 0
+
+      for (let i = 1; i <= total; i++) {
+        try {
+          const t = await contract.getTranscript(i)
+          const normalized = {
+            id: Number(t.id),
+            studentAddress: t.studentAddress,
+            institutionId: Number(t.institutionId),
+            degree: t.degree,
+            major: t.major,
+            ipfsHash: t.ipfsHash,
+            isVerified: Boolean(t.isVerified),
+            createdAt: Number(t.createdAt),
+            updatedAt: Number(t.updatedAt)
+          }
+          transcripts.push(normalized)
+          studentSet.add(normalized.studentAddress.toLowerCase())
+          if (normalized.isVerified) verifiedCount++
+        } catch (e) {
+          // ignore holes
+        }
+      }
+
+      setAllTranscripts(transcripts)
+      setStats({
+        totalTranscripts: BigInt(total),
+        totalStudents: BigInt(studentSet.size),
+        verifiedTranscripts: BigInt(verifiedCount)
+      })
     } catch (error) {
       console.error('Failed to load institution data:', error)
     } finally {
@@ -47,22 +84,7 @@ export default function InstitutionDashboard() {
     }
   }
 
-  if (user.role !== ROLES.INSTITUTION) {
-    return (
-      <div className="card">
-        <div style={{ textAlign: 'center', padding: '40px 20px' }}>
-          <div style={{ fontSize: '48px', marginBottom: '16px' }}>🚫</div>
-          <h3>Access Denied</h3>
-          <p className="card-subtitle">
-            This page is only accessible to registered institutions.
-          </p>
-          <Link className="btn" to="/" style={{ marginTop: '16px' }}>
-            Return to Dashboard
-          </Link>
-        </div>
-      </div>
-    )
-  }
+  // Access relaxed: allow viewing for any role (for demo/teacher access)
 
   if (loading) {
     return (
@@ -134,10 +156,7 @@ export default function InstitutionDashboard() {
             <h3 className="card-title">📝 Quick Actions</h3>
           </div>
           <div className="grid" style={{ gap: '12px' }}>
-            <Link className="btn" to="/create">
-              <span>➕</span>
-              Create New Transcript
-            </Link>
+            {/* Create action removed for demo */}
             <Link className="btn ghost" to="/institution/students">
               <span>👥</span>
               Manage Students
@@ -163,6 +182,55 @@ export default function InstitutionDashboard() {
             <small>Transcript creation and updates will appear here</small>
           </div>
         </div>
+      </div>
+
+      <div className="card" style={{ marginTop: '32px' }}>
+        <div className="card-header">
+          <h3 className="card-title">📚 All Student Transcripts</h3>
+        </div>
+        {allTranscripts.length === 0 ? (
+          <div style={{ color: 'var(--muted)', textAlign: 'center', padding: '20px' }}>
+            <p>No transcripts found</p>
+          </div>
+        ) : (
+          <div className="table" style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr>
+                  <th style={{ textAlign: 'left', padding: '8px' }}>ID</th>
+                  <th style={{ textAlign: 'left', padding: '8px' }}>Student</th>
+                  <th style={{ textAlign: 'left', padding: '8px' }}>Degree</th>
+                  <th style={{ textAlign: 'left', padding: '8px' }}>Major</th>
+                  <th style={{ textAlign: 'left', padding: '8px' }}>Status</th>
+                  <th style={{ textAlign: 'left', padding: '8px' }}>Created</th>
+                  <th style={{ textAlign: 'left', padding: '8px' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {allTranscripts.map(t => (
+                  <tr key={t.id} style={{ borderTop: '1px solid var(--border)' }}>
+                    <td style={{ padding: '8px', fontFamily: 'monospace' }}>{t.id}</td>
+                    <td style={{ padding: '8px', fontFamily: 'monospace' }}>{t.studentAddress}</td>
+                    <td style={{ padding: '8px' }}>{t.degree}</td>
+                    <td style={{ padding: '8px' }}>{t.major}</td>
+                    <td style={{ padding: '8px' }}>
+                      <span className={`badge ${t.isVerified ? 'ok' : 'warn'}`}>
+                        {t.isVerified ? 'Verified' : 'Pending'}
+                      </span>
+                    </td>
+                    <td style={{ padding: '8px' }}>{new Date(t.createdAt * 1000).toLocaleString()}</td>
+                    <td style={{ padding: '8px' }}>
+                      <div className="row" style={{ gap: '8px' }}>
+                        <Link className="btn xs ghost" to={`/view/${t.id}`}>View</Link>
+                        <Link className="btn xs ghost" to={`/verify/${t.id}`}>Verify</Link>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       <div className="card" style={{ marginTop: '32px' }}>

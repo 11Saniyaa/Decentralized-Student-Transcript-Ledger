@@ -4,6 +4,8 @@ import { getContract } from '../../lib/contract'
 export default function Register() {
   const [name, setName] = React.useState('')
   const [studentId, setStudentId] = React.useState('')
+  const [branch, setBranch] = React.useState('Computer Science')
+  const [contact, setContact] = React.useState('')
   const [status, setStatus] = React.useState('')
 
   const onSubmit = async (e) => {
@@ -11,7 +13,7 @@ export default function Register() {
     setStatus('Submitting...')
     try {
       const c = await getContract()
-      const tx = await c.registerStudent(name, studentId)
+      const tx = await c.registerStudent(name, studentId, branch, contact)
       await tx.wait()
       setStatus('Registered successfully')
     } catch (e) {
@@ -20,7 +22,7 @@ export default function Register() {
   }
 
   return (
-    <div className="panel" style={{ maxWidth: 520 }}>
+    <div className="panel" style={{ maxWidth: 700 }}>
       <form onSubmit={onSubmit} className="grid">
         <h3>Register Student</h3>
         <div className="field">
@@ -28,8 +30,25 @@ export default function Register() {
           <input className="input" placeholder="Jane Doe" value={name} onChange={(e)=>setName(e.target.value)} required />
         </div>
         <div className="field">
-          <label className="label">Student ID</label>
-          <input className="input" placeholder="ST2024xxx" value={studentId} onChange={(e)=>setStudentId(e.target.value)} required />
+          <label className="label">PRN</label>
+          <input className="input" placeholder="PRN001" value={studentId} onChange={(e)=>setStudentId(e.target.value.toUpperCase())} required />
+        </div>
+        <div className="grid cols-2">
+          <div className="field">
+            <label className="label">Branch</label>
+            <select className="select" value={branch} onChange={(e)=>setBranch(e.target.value)}>
+              <option>Computer Science</option>
+              <option>Electrical</option>
+              <option>Mechanical</option>
+              <option>Civil</option>
+              <option>Information Technology</option>
+              <option>Electronics & Telecom</option>
+            </select>
+          </div>
+          <div className="field">
+            <label className="label">Contact</label>
+            <input className="input" placeholder="email or phone" value={contact} onChange={(e)=>setContact(e.target.value)} required />
+          </div>
         </div>
         <div className="row">
           <button className="btn" type="submit">Register</button>

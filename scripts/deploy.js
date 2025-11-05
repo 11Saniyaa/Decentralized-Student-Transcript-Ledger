@@ -60,14 +60,18 @@ async function main() {
     console.log("\n👨‍🎓 Registering test students...");
     const tx4 = await transcriptLedger.connect(student1).registerStudent(
       "Alice Johnson", 
-      "ST2024001"
+      "ST2024001",
+      "Computer Science",
+      "alice@example.com"
     );
     await tx4.wait();
     console.log("✅ Student Alice Johnson registered:", student1.address);
 
     const tx5 = await transcriptLedger.connect(student2).registerStudent(
       "Bob Smith", 
-      "ST2024002"
+      "ST2024002",
+      "Electrical",
+      "+1-555-0102"
     );
     await tx5.wait();
     console.log("✅ Student Bob Smith registered:", student2.address);
@@ -78,7 +82,8 @@ async function main() {
       student1.address,
       "Bachelor of Science",
       "Computer Science",
-      "QmSampleIPFSHash123..."
+      "Sem 8",
+      "QmbmvmYmPtyFtUL8DxvfGyBjBBWryf4fgH8eYcVSJDooMc"
     );
     const receipt6 = await tx6.wait();
     
