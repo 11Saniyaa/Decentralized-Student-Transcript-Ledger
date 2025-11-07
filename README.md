@@ -114,7 +114,9 @@ Decentralized-Student-Transcript-Ledger/
 
 - [Complete Setup Guide](./COMPLETE-SETUP.md)
 - [Blockchain Setup](./BLOCKCHAIN-SETUP.md)
-- [Pinata Configuration](./PINATA-FIX.md)
+- [Pinata IPFS Setup](./frontend/PINATA_SETUP_GUIDE.md)
+- [IPFS Configuration](./frontend/IPFS_SETUP.md)
+- [PDF Viewer Features](./PDF-VIEWER-FEATURES.md)
 - [Demo Instructions](./demo-instructions.md)
 
 ## 🔒 Security Notes

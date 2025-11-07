@@ -15,3 +15,4 @@ router.get('/', getStudentByWallet); // Query by ?walletId=
 
 export default router;
 
+

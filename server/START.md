@@ -60,3 +60,4 @@ PORT=5001
 3. **Port in use**: Change PORT in `.env` file
 4. **CORS errors**: Check frontend is connecting to correct port
 
+
